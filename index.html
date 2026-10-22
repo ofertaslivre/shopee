@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<div id="topo"></div>
+<section class="hero" id="hero"></section>
+<div id="promoBox"></div>
+<div class="cats" id="cats"></div>
+<main id="conteudo"></main>
+<main id="cursos"></main>
+<footer class="rodape" id="rodape"></footer>
+<script src="/site.js"></script>
+<script>
+function ir(i){const ss=[...document.querySelectorAll('.slide')];atual=i;ss.forEach((s,k)=>s.classList.toggle('on',k===i));[...$('pontos').children].forEach((b,k)=>b.classList.toggle('on',k===i))}
+function iniciar(){clearInterval(timer);const n=document.querySelectorAll('.slide').length;if(n>1&&!matchMedia('(prefers-reduced-motion:reduce)').matches)timer=setInterval(()=>ir((atual+1)%n),5000)}
+function desenharConteudo(){
+  document.querySelectorAll('#topo nav button').forEach(b=>b.classList.toggle('on',b.dataset.f===filtro));
+  const vis=CFG.produtos.filter(p=>p.ativo!==false);let h='';
+  if(filtro!=='todos'||busca){
+    const l=vis.filter(p=>(filtro==='todos'||p.cat===filtro)&&(!busca||p.nome.toLowerCase().includes(busca)));
+    const t=busca?'Resultados para "'+esc(busca)+'"':esc((CFG.categorias.find(c=>c.id===filtro)||{}).nome);
+    h=`<h2>${t}</h2><div class="grade">${l.map(card).join('')||'<p class="vazio">Nenhum produto encontrado.</p>'}</div>`;
+  }else[1,2].forEach(n=>{const s=CFG['secao'+n]||{},l=vis.filter(p=>+p.secao===n);if(s.ativa!==false&&l.length)h+=`<h2>${esc(s.titulo)}</h2><div class="grade">${l.map(card).join('')}</div>`});
+  $('conteudo').innerHTML=h||'<p class="vazio">Em breve, novidades por aqui.</p>';
+}
+iniciarSite(()=>{
+  const cs=CFG.categorias.slice(0,6),sl=CFG.carrossel.filter(s=>s.ativo!==false);
+  const tile=c=>`<button class="tile" data-f="${esc(c.id)}" style="${bg(c)}"><span>${esc(c.nome)}</span></button>`;
+  $('hero').innerHTML=`<div class="lado">${cs.slice(0,3).map(tile).join('')}</div>
+   <div class="rot" id="rot">${sl.map((s,i)=>{const u=seguro(s.link),ext=https(u);return `<div class="slide s${i%3+1}" ${s.foto?`style="background-image:linear-gradient(90deg,#000b,#0000),url('${esc(s.foto)}')"`:''}><small>${esc(s.sub)}</small><h2>${esc(s.titulo)}</h2><p>${esc(s.texto)}</p>${s.botao?`<a class="cta" href="${esc(u)}"${ext?' target="_blank" rel="sponsored noopener"':''}>${esc(s.botao)}</a>`:''}</div>`}).join('')}<div class="pontos" id="pontos"></div></div>
+   <div class="lado">${cs.slice(3,6).map(tile).join('')}</div>`;
+  document.querySelectorAll('.slide').forEach((_,i)=>{const b=document.createElement('button');b.setAttribute('aria-label','Banner '+(i+1));b.onclick=()=>{ir(i);iniciar()};$('pontos').appendChild(b)});
+  $('rot').onmouseenter=()=>clearInterval(timer);$('rot').onmouseleave=iniciar;ir(0);iniciar();
+  $('cats').innerHTML=CFG.categorias.map(c=>`<button class="cat" data-f="${esc(c.id)}"><i style="${bg(c)}">${c.foto?'':esc(c.nome[0])}</i>${esc(c.nome)}</button>`).join('');
+  desenharConteudo();
+  const ps=CFG.plataformas.filter(p=>p.ativo!==false),b=linhas(CFG.curso.beneficios);
+  $('cursos').innerHTML=ps.length?`<h2>${esc(CFG.curso.nome)}</h2><div class="pgrid">${ps.map(pcard).join('')}</div>${b.length?`<h2>O que o curso inclui</h2><ul class="ck">${b.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}${ofertaHTML('')}`:'';
+});
+</script>
+</body>
+</html>
